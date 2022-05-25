@@ -18,25 +18,33 @@ library(scales)
 #library(mooreasgd)
 
 
-
-
-
-
-
 # Define UI for application that has multiple tabs 
 ui <- fluidPage(
   
   # theme
-  #theme = bs_theme(version = 4, bootswatch = "minty"),
+  theme = bslib::bs_theme(bootswatch = "minty",
+                          version = 5),
   
   # Application title
   titlePanel("Process Onset HOBO Logger Data")
   ,
-  
+
   sidebarLayout(
     
     
     sidebarPanel(
+
+
+      # Include clarifying text ----
+      helpText("Select a csv data file containing logger data", 
+               "of your chosen type. Next select relevant data processing",
+               "parameters (number of rows to skip when reading file, etc.) ",
+               "Finally, input calibration data if relevant.")
+      ,
+      
+      # Horizontal line ----
+      tags$hr()
+      ,
       
       # Input: choose what kind of file to process
       selectInput("filetype", "Select data type",
@@ -46,54 +54,25 @@ ui <- fluidPage(
                   selected = "ct_type")
       ,
       
-      
-      # Include clarifying text ----
-      helpText("Select a csv data file containing logger data", 
-               "of your chosen type. Next select relevant data processing",
-               "parameters (number of rows to skip when reading file, etc.) ",
-               "Finally, input calibration data if relevant.")
-      ,
-      
-      
+
       # Input: Select a file ----
-      fileInput("file1", "Choose CT CSV File",
+      fileInput("file1", "Choose a CSV file",
                 multiple = FALSE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
                            ".csv"))
       ,
+    
       
-      # Horizontal line ----
-      tags$hr()
+      # How many lines to skip at get go
+      numericInput("skip.num", "Number of lines to skip", 1, 
+                   min = NA, max = NA, step = NA)
       ,
       
       # Input: Checkbox if file has header ----
       checkboxInput("col.names",
                     "Keep column names", 
                     TRUE)
-      ,
-      
-      # Horizontal line ----
-      tags$hr()
-      ,
-      
-      # 
-      # # Input: Buttons for calibration types
-      # radioButtons("cal.time", "Timing of calibration",
-      #              choices = c('Pre-Deployment' = "predeployment",
-      #                          'Post-Deployment' = "postdeployment",
-      #                          'Both' = "both"),
-      #              selected = "predeployment"),
-      # 
-      # radioButtons("cal.ref", "Type of calibration",
-      #              choices = c('One Reference' = "one.ref",
-      #                          'Two References' = "two.ref"),
-      #              selected = "one.ref"),
-      # 
-      
-      # How many lines to skip at get go
-      numericInput("skip.num", "Number of lines to skip", 1, 
-                   min = NA, max = NA, step = NA)
       ,
       
       
@@ -121,7 +100,7 @@ ui <- fluidPage(
       ,
       
       textInput("launch.start", "Enter date and time of launch start (M/D/YYYY H:M:S)",
-                value = ("03/18/2022 13:00:00"))
+                value = ("03/20/2022 19:00:00"))
       ,
       
       textInput("launch.end", "Enter date and time of launch end (M/D/YYYY H:M:S)",
@@ -138,6 +117,9 @@ ui <- fluidPage(
                    selected = "high.range")
       ,
       
+      # Horizontal line ----
+      tags$hr()
+      ,
       
       # Include clarifying text ----
       helpText("LOGGER CALIBRATION DETIALS")
@@ -145,7 +127,7 @@ ui <- fluidPage(
       
       # Input: user inputs the electrical conductivity value of the calibration reference solution
       numericInput("calValue", "Calibration value (uS/cm)",
-                   value = 53800)
+                   value = 54600)
       ,
       
       # Input: Buttons for EC vs SC calibration
@@ -169,7 +151,23 @@ ui <- fluidPage(
       
       # Input: user inputs the time of calibration
       textInput("time_input", "Enter time in 24h format (H:M:S)", 
-                value = ("16:20:00"))
+                value = ("12:06:00"))
+      
+      
+      # 
+      # # Input: Buttons for calibration types
+      # radioButtons("cal.time", "Timing of calibration",
+      #              choices = c('Pre-Deployment' = "predeployment",
+      #                          'Post-Deployment' = "postdeployment",
+      #                          'Both' = "both"),
+      #              selected = "predeployment"),
+      # 
+      # radioButtons("cal.ref", "Type of calibration",
+      #              choices = c('One Reference' = "one.ref",
+      #                          'Two References' = "two.ref"),
+      #              selected = "one.ref"),
+      # 
+      
       
       ) # end of CT condition
       
@@ -178,33 +176,49 @@ ui <- fluidPage(
     
     # Main panel for displaying outputs ----
     mainPanel(
-      
+    
       
       tabsetPanel(id = 'tab.id',
                   # titles of tabs and what is displayed in each
                   conditionalPanel(condition = "input.filetype == 'ct_type'",
-                  tabPanel(title = "Conductivity-Temperature",
+                                   h3(img(src='silbigerlabart_jkerlin.png', align = "left", height = 160, width = 150),
+                                      "CT Logger Data"), # add image inline with header
+                           tabPanel(title = "Conductivity-Temperature",
                            tableOutput("contents"),
                            plotOutput("plot"),  # Output: Plot of CT by date, colored by temp ----
                            tableOutput("cal.contents"),
                            plotOutput("calibrated.plot"),
-                           downloadButton('downloadData', "Download CSV")
+                           downloadButton('downloadCT', "Download CSV")
+                           
                   )),
                   
                   conditionalPanel(condition = "input.filetype == 'depth_type'",
+                                   h3(img(src='silbigerlabart_jkerlin.png', align = "left", height = 160, width = 150),
+                                      "Water Level Logger Data"), # add image inline with header
                   tabPanel(title = "Water Level",
                            textOutput("depth.text"),
                            tableOutput("depth.table"),
-                           plotOutput("depth.plot")
+                           plotOutput("depth.plot"),
+                           downloadButton('downloadDepth', "Download CSV")
                   )),
                   
                   conditionalPanel(condition = "input.filetype == 'ph_type'",
+                                   h3(img(src='silbigerlabart_jkerlin.png', align = "left", height = 160, width = 150),
+                                      "pH Logger Data"), # add image inline with header
                   tabPanel(title = "pH",
                            textOutput("ph.text"),
                            tableOutput("ph.table"),
-                           plotOutput("ph.plot")
-                  ))
+                           plotOutput("ph.plot"),
+                           downloadButton('downloadpH', "Download CSV")
+                  )),
                   
+                  # Horizontal line ----
+                  tags$hr()
+                  ,
+                  # Information and lab logo at bottom of page
+                  img(src='Silbiger_Lab_Logo.png', align = "center", height = 70, width = 140),
+                  h3("\n"),
+                  helpText("Shiny App created in RStudio by Danielle Barnas - Last updated May 2022")
       )
       
       
@@ -212,6 +226,40 @@ ui <- fluidPage(
     )
   )
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ######################################################################
@@ -498,7 +546,7 @@ server <- function(input, output) {
   
   # Download calibrated csv file
   
-  output$downloadData <- downloadHandler(
+  output$downloadCT <- downloadHandler(
     filename = function() {
       paste0(Sys.Date(),'_calibrated_',input$file1) # original file has .csv as part of filename alread
     },
@@ -550,13 +598,24 @@ server <- function(input, output) {
       geom_point() +
       theme_bw() +
       labs(y = "Depth (m)",
-           color = "Temperature (C)")
+           color = "Temperature (C)") +
+      ylim(min(-df.b()$Depth_m) - 0.2,0)
     
     return(depthplot)
     
   })
   
   
+  # Download calibrated csv file
+  
+  output$downloadDepth <- downloadHandler(
+    filename = function() {
+      paste0(Sys.Date(),'_calibrated_',input$file1) # original file has .csv as part of filename alread
+    },
+    content = function(con) {
+      write_csv(df.c(), con)
+    }
+  )
   
   
   
@@ -601,6 +660,18 @@ server <- function(input, output) {
     return(phplot)
     
   })
+  
+  
+  # Download calibrated csv file
+  
+  output$downloadpH <- downloadHandler(
+    filename = function() {
+      paste0(Sys.Date(),'_calibrated_',input$file1) # original file has .csv as part of filename alread
+    },
+    content = function(con) {
+      write_csv(df.c(), con)
+    }
+  )
   
 }
 
