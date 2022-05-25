@@ -1,0 +1,13 @@
+name: HOBO_Logger_Processing
+title: HOBO_Logger_Processing
+username:
+account: dmbarnas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6360691
+bundleId: 5941569
+url: https://dmbarnas.shinyapps.io/HOBO_Logger_Processing/
+when: 1653450595.62064
+lastSyncTime: 1653450595.62064
+asMultiple: FALSE
+asStatic: FALSE
