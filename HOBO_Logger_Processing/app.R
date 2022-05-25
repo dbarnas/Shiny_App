@@ -19,6 +19,10 @@ library(scales)
 
 
 
+
+
+
+
 # Define UI for application that has multiple tabs 
 ui <- fluidPage(
   
@@ -33,7 +37,7 @@ ui <- fluidPage(
     
     
     sidebarPanel(
-
+      
       # Input: choose what kind of file to process
       selectInput("filetype", "Select data type",
                   choices = c("Conductivity-Temperature" = "ct_type",
@@ -41,35 +45,63 @@ ui <- fluidPage(
                               pH = "ph_type"),
                   selected = "ct_type")
       ,
-
       
       
-      # # Include clarifying text ----
-      # helpText("Select a csv data file containing logger data", 
-      #          "of your chosen type. Next select relevant data processing",
-      #          "parameters (number of rows to skip when reading file, etc.) ",
-      #          "Finally, input calibration data if relevant.")
-      # ,
-      # 
+      # Include clarifying text ----
+      helpText("Select a csv data file containing logger data", 
+               "of your chosen type. Next select relevant data processing",
+               "parameters (number of rows to skip when reading file, etc.) ",
+               "Finally, input calibration data if relevant.")
+      ,
       
       
       # Input: Select a file ----
-      fileInput("file1", "Choose CSV File",
+      fileInput("file1", "Choose CT CSV File",
                 multiple = FALSE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
                            ".csv"))
       ,
       
-      # How many lines to skip at get go
-      numericInput("skip.num", "Number of lines to skip", 1, 
-                   min = NA, max = NA, step = NA)
+      # Horizontal line ----
+      tags$hr()
       ,
       
       # Input: Checkbox if file has header ----
       checkboxInput("col.names",
                     "Keep column names", 
                     TRUE)
+      ,
+      
+      # Horizontal line ----
+      tags$hr()
+      ,
+      
+      # 
+      # # Input: Buttons for calibration types
+      # radioButtons("cal.time", "Timing of calibration",
+      #              choices = c('Pre-Deployment' = "predeployment",
+      #                          'Post-Deployment' = "postdeployment",
+      #                          'Both' = "both"),
+      #              selected = "predeployment"),
+      # 
+      # radioButtons("cal.ref", "Type of calibration",
+      #              choices = c('One Reference' = "one.ref",
+      #                          'Two References' = "two.ref"),
+      #              selected = "one.ref"),
+      # 
+      
+      # How many lines to skip at get go
+      numericInput("skip.num", "Number of lines to skip", 1, 
+                   min = NA, max = NA, step = NA)
+      ,
+      
+      
+      # Input: Select number of rows to display ----
+      radioButtons("disp", "Display",
+                   choices = c(Head = "head",
+                               All = "all"),
+                   selected = "head")
       ,
       
       
@@ -80,21 +112,12 @@ ui <- fluidPage(
                    selected = "degC")
       ,
       
-      # Input: Select number of rows to display ----
-      radioButtons("disp", "Display",
-                   choices = c(Head = "head",
-                               All = "all"),
-                   selected = "head")
-      ,
-      
-
       # Horizontal line ----
       tags$hr()
       ,
       
-      
       # Include clarifying text ----
-      helpText("LOGGER LAUNCH DETAILS")
+      helpText("LOGGER LAUNCH DETIALS")
       ,
       
       textInput("launch.start", "Enter date and time of launch start (M/D/YYYY H:M:S)",
@@ -105,90 +128,52 @@ ui <- fluidPage(
                 value = ("03/22/2022 12:00:00"))
       ,
       
-      
-      ####### CONDUCTIVITY - TEMPERATURE panel options
       conditionalPanel(condition = "input.filetype == 'ct_type'",
-                       
-                       
-                       # Input: Select whether logger recorded in high or low or both ranges ----
-                       radioButtons("range", "CT logger range",
-                                    choices = c(High = "high.range",
-                                                Low = "low.range",
-                                                Both = "both.range"),
-                                    selected = "high.range")
-                       ,
-                       
-                       
-                       # Include clarifying text ----
-                       helpText("LOGGER CALIBRATION DETAILS")
-                       ,
-                       
-                       # Input: user inputs the electrical conductivity value of the calibration reference solution
-                       numericInput("calValue", "Calibration value (uS/cm)",
-                                    value = 53800)
-                       ,
-                       
-                       # Input: Buttons for EC vs SC calibration
-                       radioButtons("ec.sc.cal", "Calibration value type",
-                                    choices = c('Electrical Conductivity' = "EC",
-                                                'Specific Conductance' = "SC"),
-                                    selected = "SC")
-                       ,
-                       
-                       # Input: user inputs the temperature value at time of calibration
-                       numericInput("calTemp", "Calibration temperature (C)",
-                                    value = 29.3)
-                       ,
-                       
-                       
-                       # Input: user inputs the date of calibration
-                       dateInput("date_input", "Enter calibration date (M/D/YYYY)",
-                                 value = lubridate::mdy("03/22/2022"))
-                       ,
-                       
-                       
-                       # Input: user inputs the time of calibration
-                       textInput("time_input", "Enter calibration time in 24h format (H:M:S)", 
-                                 value = ("16:20:00"))
-                       
-                       
-                       
-                       # # Input: Buttons for calibration types
-                       # radioButtons("cal.time", "Timing of calibration",
-                       #              choices = c('Pre-Deployment' = "predeployment",
-                       #                          'Post-Deployment' = "postdeployment",
-                       #                          'Both' = "both"),
-                       #              selected = "predeployment"),
-                       # 
-                       # radioButtons("cal.ref", "Type of calibration",
-                       #              choices = c('One Reference' = "one.ref",
-                       #                          'Two References' = "two.ref"),
-                       #              selected = "one.ref"),
-                       # 
-                       
-                       
-      ), 
+      
+      # Input: Select whether logger recorded in high or low or both ranges ----
+      radioButtons("range", "CT Range",
+                   choices = c(High = "high.range",
+                               Low = "low.range",
+                               Both = "both.range"),
+                   selected = "high.range")
+      ,
       
       
+      # Include clarifying text ----
+      helpText("LOGGER CALIBRATION DETIALS")
+      ,
       
-      ####### WATER LEVEL panel options
-      conditionalPanel(condition = "input.filetype == 'depth_type'"
-        
-        
-      ),
+      # Input: user inputs the electrical conductivity value of the calibration reference solution
+      numericInput("calValue", "Calibration value (uS/cm)",
+                   value = 53800)
+      ,
+      
+      # Input: Buttons for EC vs SC calibration
+      radioButtons("ec.sc.cal", "Calibration value type",
+                   choices = c('Electrical Conductivity' = "EC",
+                               'Specific Conductance' = "SC"),
+                   selected = "SC")
+      ,
+      
+      # Input: user inputs the temperature value at time of calibration
+      numericInput("calTemp", "Calibration Temperature (C)",
+                   value = 29.3)
+      ,
       
       
+      # Input: user inputs the date of calibration
+      dateInput("date_input", "Enter Date",
+                value = lubridate::mdy("03/22/2022"))
+      ,
       
       
-      ####### pH panel options
-      conditionalPanel(condition = "input.filetype == 'ph_type'"
-
-        
-      )
+      # Input: user inputs the time of calibration
+      textInput("time_input", "Enter time in 24h format (H:M:S)", 
+                value = ("16:20:00"))
       
+      ) # end of CT condition
       
-    ) 
-    
+    )
     ,
     
     # Main panel for displaying outputs ----
@@ -197,30 +182,28 @@ ui <- fluidPage(
       
       tabsetPanel(id = 'tab.id',
                   # titles of tabs and what is displayed in each
-                  
+                  conditionalPanel(condition = "input.filetype == 'ct_type'",
                   tabPanel(title = "Conductivity-Temperature",
-                           tableOutput("ct.raw"),
-                           plotOutput("ct.plot"),  # Output: Plot of CT by date, colored by temp ----
+                           tableOutput("contents"),
+                           plotOutput("plot"),  # Output: Plot of CT by date, colored by temp ----
                            tableOutput("cal.contents"),
                            plotOutput("calibrated.plot"),
                            downloadButton('downloadData', "Download CSV")
-                  ),
+                  )),
                   
-                  
+                  conditionalPanel(condition = "input.filetype == 'depth_type'",
                   tabPanel(title = "Water Level",
                            textOutput("depth.text"),
-                           tableOutput("depth.raw"),
-                           plotOutput("depth.plot"),
-                           downloadButton('downloadData', "Download CSV")
-                  ),
+                           tableOutput("depth.table"),
+                           plotOutput("depth.plot")
+                  )),
                   
-                  
+                  conditionalPanel(condition = "input.filetype == 'ph_type'",
                   tabPanel(title = "pH",
                            textOutput("ph.text"),
-                           tableOutput("ph.raw"),
-                           plotOutput("ph.plot"),
-                           downloadButton('downloadData', "Download CSV")
-                  )
+                           tableOutput("ph.table"),
+                           plotOutput("ph.plot")
+                  ))
                   
       )
       
@@ -239,6 +222,19 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   
+  # input$file1 will be NULL initially. After the user selects
+  # and uploads a file, head of that data file by default,
+  # or all rows if selected, will be shown.
+  
+  #req(input$file1)
+  
+  
+  # observeEvent(input$file.type, {
+  #   
+  #   updateTabsetPanel(inputID = "params", selected = input$file.type)
+  #   
+  # })
+  
   
   #################################################################
   # READ IN DATA FILE 
@@ -246,7 +242,7 @@ server <- function(input, output) {
   
   df.a <- reactive ({
     
-    req(input$file1) # will not run until file is selected
+    req(input$file1)
     
     df1 <- read_csv(input$file1$datapath,
                     col_names = input$col.names,
@@ -261,9 +257,9 @@ server <- function(input, output) {
   
   df.b <- reactive ({
     
-    req(input$file1) # will not run until file is selected
+    req(input$file1)
     
-    if(input$tab.id == "Conductivity-Temperature"){
+    if(input$filetype == "ct_type"){
       
       if(input$range == "high.range"){
         
@@ -276,14 +272,11 @@ server <- function(input, output) {
           dplyr::mutate(Date = as.character(mdy_hms(Date))) %>% 
           tidyr::drop_na()
         
-        # correct for temperature
-        if(input$log.temp == "degC" & median(df2$TempInSitu) > 40){
+        # correct for temperature in F
+        if(input$log.temp == "degF"){
           df2 <- df2 %>% 
             mutate(TempInSitu = (TempInSitu - 32) * 5 / 9)
-        } else if(input$log.temp == "degF" & median(df2$TempInSitu) < 40){
-          df2 <- df2 %>% 
-            mutate(TempInSitu = (TempInSitu * 9 / 5) + 32)
-        }
+        } 
         
         
       } else if(input$range == "low.range") {
@@ -297,22 +290,18 @@ server <- function(input, output) {
           dplyr::mutate(Date = as.character(mdy_hms(Date))) %>% 
           # mutate(TempInSitu = if_else(input$log.temp == "degC", TempInSitu, ((TempInSitu - 32) * 5 / 9))) %>%
           tidyr::drop_na()
-        
-        # correct for temperature
-        if(input$log.temp == "degC" & median(df2$TempInSitu) > 40){
+        # correct for temperature in F
+        if(input$log.temp == "degF"){
           df2 <- df2 %>% 
             mutate(TempInSitu = (TempInSitu - 32) * 5 / 9)
-        } else if(input$log.temp == "degF" & median(df2$TempInSitu) < 40){
-          df2 <- df2 %>% 
-            mutate(TempInSitu = (TempInSitu * 9 / 5) + 32)
-        }
+        } 
         
         
       } else if(input$range == "both.range") {
         
         df2 <- df.a() %>%
           dplyr::mutate(LoggerID = str_extract(string = colnames(df.a())[3], pattern = "[0-9]{8}")) %>%   # add column for Logger ID
-          dplyr::select(contains('Date'), LoggerID, contains("High Range"), contains("Low Range"), contains("Temp")) %>%
+          dplyr::select(LoggerID, contains('Date'), contains("High Range"), contains("Low Range"), contains("Temp")) %>%
           dplyr::rename(Date=contains("Date"),
                         TempInSitu=contains("Temp"),
                         E_Conductivity_High=contains("High Range"),
@@ -320,53 +309,38 @@ server <- function(input, output) {
           dplyr::mutate(Date = as.character(mdy_hms(Date))) %>% 
           # dplyr::mutate(TempInSitu = if_else(input$log.temp == "degC", TempInSitu, ((TempInSitu - 32) * 5 / 9))) %>%
           tidyr::drop_na()
-
-        # correct for temperature
-        if(input$log.temp == "degC" & mean(df2$TempInSitu) > 50){
+        # correct for temperature in F
+        if(input$log.temp == "degF"){
           df2 <- df2 %>% 
-            mutate(TempInSitu = (TempInSitu - 32) * 5 / 9)
-        } else if(input$log.temp == "degF" & mean(df2$TempInSitu) < 50){
-          df2 <- df2 %>% 
-            mutate(TempInSitu = (TempInSitu * 9 / 5) + 32)
-        }
+            dplyr::mutate(TempInSitu = (TempInSitu - 32) * 5 / 9)
+        } 
         
       }
       
-      
-      
-      
-      
-      
-      
-      
-      
-    } else if(input$tab.id == "Water Level"){
-      
-      df2 <- c("Water Level processing is a work in progress.")
-      
+    } else if(input$filetype == "depth_type"){
       
       df2 <- df.a() %>%
         dplyr::mutate(LoggerID = str_extract(string = colnames(df.a())[3], pattern = "[0-9]{8}")) %>%   # add column for Logger ID
         dplyr::select(contains('Date'), LoggerID, contains("Temp"), contains("Abs Pres"), contains("Water Level")) %>%
-        dplyr::rename(date = contains("Date"),
+        dplyr::rename(Date = contains("Date"),
                       TempInSitu = contains("Temp"),
                       AbsPressure_kPa = contains("Abs Pres"),
                       Depth_m = contains("Water Level")) %>%
-        tidyr::drop_na()
-    
+        dplyr::mutate(Date = as.character(mdy_hms(Date))) %>% 
+        tidyr::drop_na() %>% 
+        filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end)))
       
       
+    } else if(input$filetype == "ph_type"){
       
-    
-    } else if(input$tab.id == "pH"){
       
-    
       df2 <- df.a() %>%
         dplyr::select(contains('Date'), contains("temp"), mV, pH) %>%
         dplyr::rename(Date = contains("Date"),
                       TempInSitu = contains("Temp")) %>%
-        tidyr::drop_na()
-      
+        dplyr::mutate(Date = as.character(ymd_hms(Date))) %>% 
+        tidyr::drop_na() %>% 
+        filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end)))
       
     }
     
@@ -384,7 +358,7 @@ server <- function(input, output) {
   
   df.c <- reactive({
     
-    req(input$file1) # will not run until file is selected
+    req(input$file1)
     
     # unite date and time of calibration inputs for data filter
     inputDate <- paste(input$date_input, input$time_input)
@@ -449,16 +423,11 @@ server <- function(input, output) {
   
   
   
-
-  
-  
-  
-#################################################################
+  #################################################################
   # CT OUTPUTS
-################################################################# 
+  #################################################################    
   
-  
-  output$ct.raw <- renderTable({
+  output$contents <- renderTable({
     
     
     # return either head() or View() output
@@ -472,10 +441,11 @@ server <- function(input, output) {
   })
   
   
-  output$ct.plot <- renderPlot({
+  output$plot <- renderPlot({
     
     dfbplot <- df.b() %>% 
-      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end)))
+      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end))) %>% 
+      mutate(Date = ymd_hms(Date))
     
     # return plot of data
     myplot <- ggplot(data = dfbplot, 
@@ -484,7 +454,6 @@ server <- function(input, output) {
                          color = TempInSitu)) +
       geom_point() +
       theme_bw() +
-      scale_x_discrete(breaks= dfbplot$Date[seq(0, length(dfbplot$Date), by = length(dfbplot$Date)/4)]) +
       labs(y = "Electrical Conductivity (uS/cm)",
            color = "Temperature (C)")
     
@@ -512,13 +481,13 @@ server <- function(input, output) {
   output$calibrated.plot <- renderPlot({
     
     
-    calplot <- ggplot(data = df.c(),
-                      aes(x = Date,
-                          y = Salinity_psu,
-                          color = TempInSitu)) +
+    calplot <- df.c() %>% 
+      mutate(Date = ymd_hms(Date)) %>%
+      ggplot(aes(x = Date,
+                 y = Salinity_psu,
+                 color = TempInSitu)) +
       geom_point() +
       theme_bw() +
-      scale_x_discrete(breaks= df.c()$Date[seq(0, length(df.c()$Date), by = length(df.c()$Date)/4)]) +
       labs(y = "Salinity (psu)",
            color = "Temperature (C)")
     
@@ -550,16 +519,15 @@ server <- function(input, output) {
   
   
   
-  output$depth.text <- renderText({
-    
-    mytext <- "Water level processing is in progress..."
-    
-    return(mytext)
-  })
+  # output$depth.text <- renderText({
+  #   
+  #   mytext <- "Water level processing is in progress..."
+  #   
+  #   return(mytext)
+  # })
   
   
-  output$depth.raw <- renderTable({
-    
+  output$depth.table <- renderTable({
     
     # return either head() or View() output
     if(input$disp == "head") {
@@ -569,36 +537,25 @@ server <- function(input, output) {
     else {
       return(df.b())
     }
+    
   })
-  
   
   output$depth.plot <- renderPlot({
     
-    
-    depthplot <- ggplot(data = df.b(),
-                      aes(x = Date,
-                          y = -Depth_m,
-                          color = TempInSitu)) +
+    depthplot <- df.b() %>% 
+      mutate(Date = ymd_hms(Date)) %>% 
+      ggplot(aes(x = Date,
+                 y = -Depth_m,
+                 color = TempInSitu)) +
       geom_point() +
       theme_bw() +
-      scale_x_discrete(breaks= df.b()$Date[seq(0, length(df.b()$Date), by = length(df.b()$Date)/4)]) +
       labs(y = "Depth (m)",
            color = "Temperature (C)")
     
     return(depthplot)
+    
   })
   
-  
-  # Download calibrated csv file
-  
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      paste0(Sys.Date(),'_trimmed_',input$file1) # original file has .csv as part of filename alread
-    },
-    content = function(con) {
-      write_csv(df.b(), con)
-    }
-  )
   
   
   
@@ -607,17 +564,15 @@ server <- function(input, output) {
   # pH OUTPUTS
   ################################################################# 
   
-  output$ph.text <- renderText({
-    
-    mytext <- "pH processing is in progress..."
-    
-    return(mytext)
-  })
+  # output$ph.text <- renderText({
+  #   
+  #   mytext <- "pH processing is in progress..."
+  #   
+  #   return(mytext)
+  # })
   
   
-  
-  output$ph.raw <- renderTable({
-    
+  output$ph.table <- renderTable({
     
     # return either head() or View() output
     if(input$disp == "head") {
@@ -627,38 +582,25 @@ server <- function(input, output) {
     else {
       return(df.b())
     }
+    
   })
   
   
   output$ph.plot <- renderPlot({
     
-    
-    phplot <- ggplot(data = df.b(),
-                      aes(x = Date,
-                          y = pH,
-                          color = TempInSitu)) +
+    phplot <- df.b() %>% 
+      mutate(Date = ymd_hms(Date)) %>% 
+      ggplot(aes(x = Date,
+                 y = pH,
+                 color = TempInSitu)) +
       geom_point() +
       theme_bw() +
-      scale_x_discrete(breaks= df.b()$Date[seq(0, length(df.b()$Date), by = length(df.b()$Date)/4)]) +
       labs(y = "pH (NBS)",
            color = "Temperature (C)")
     
     return(phplot)
+    
   })
-  
-  
-  # Download calibrated csv file
-  
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      paste0(Sys.Date(),'_trimmed_',input$file1) # original file has .csv as part of filename alread
-    },
-    content = function(con) {
-      write_csv(df.b(), con)
-    }
-  )
-  
-  
   
 }
 
