@@ -124,13 +124,13 @@ ui <- fluidPage(
       
       # Input: Buttons for specifying single or double calibration
       radioButtons("single.double.cal", "Single or Double Calibration",
-                   choices = c('Single' = "single",
-                               'Double' = "double"),
+                   choices = c('One Calibration Time Point' = "single",
+                               'Two (Pre- and Post-Deployment) Calibration Time Points' = "double"),
                    selected = "single")
       ,
       
       # Include clarifying text ----
-      helpText("LOGGER CALIBRATION DETAILS (Single or Pre-launch)")
+      helpText("LOGGER CALIBRATION DETAILS (Single Time Point Calibration or Pre-launch)")
       ,
       
       # Input: user inputs the electrical conductivity value of the calibration reference solution
@@ -167,12 +167,12 @@ ui <- fluidPage(
       #########################################################################
       
       # Include clarifying text ----
-      helpText("LOGGER CALIBRATION DETAILS (Post-launch)")
+      helpText("POST-LAUNCH LOGGER CALIBRATION DETAILS (only if Two Time Points is selected above)")
       ,
       
       # Input: user inputs the electrical conductivity value of the calibration reference solution
       numericInput("calValue.post", "Calibration value (uS/cm)",
-                   value = 56314)
+                   value = 56258)
       ,
       
       # Input: Buttons for EC vs SC calibration
@@ -184,19 +184,19 @@ ui <- fluidPage(
       
       # Input: user inputs the temperature value at time of calibration
       numericInput("calTemp.post", "Calibration Temperature (C)",
-                   value = 29.3)
+                   value = 25.7)
       ,
       
       
       # Input: user inputs the date of calibration
       dateInput("date_input.post", "Enter Date",
-                value = lubridate::mdy("07/27/2022"))
+                value = lubridate::mdy("07/14/2022"))
       ,
       
       
       # Input: user inputs the time of calibration
       textInput("time_input.post", "Enter time in 24h format (H:M:S)", 
-                value = ("07:54:00"))
+                value = ("17:08:00"))
       
       
       ) # end of CT condition
@@ -679,7 +679,7 @@ server <- function(input, output) {
   
   output$downloadCT <- downloadHandler(
     filename = function() {
-      paste0(Sys.Date(),'_calibrated_',input$file1) # original file has .csv as part of filename already
+      paste0("Calibrated_",input$file1) # original file has .csv as part of filename already
     },
     content = function(con) {
       write_csv(df.c(), con)
@@ -741,7 +741,7 @@ server <- function(input, output) {
   
   output$downloadDepth <- downloadHandler(
     filename = function() {
-      paste0(Sys.Date(),'_calibrated_',input$file1) # original file has .csv as part of filename already
+      paste0("Calibrated_",input$file1) # original file has .csv as part of filename already
     },
     content = function(con) {
       write_csv(df.c(), con)
@@ -797,7 +797,7 @@ server <- function(input, output) {
   
   output$downloadpH <- downloadHandler(
     filename = function() {
-      paste0(Sys.Date(),'_calibrated_',input$file1) # original file has .csv as part of filename alread
+      paste0("Calibrated_",input$file1) # original file has .csv as part of filename alread
     },
     content = function(con) {
       write_csv(df.c(), con)
