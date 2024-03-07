@@ -64,21 +64,22 @@ ui <- fluidPage(
       ,
     
       
-      # How many lines to skip at get go
-      numericInput("skip.num", "Number of lines to skip", 1, 
-                   min = NA, max = NA, step = NA)
-      ,
+      # # How many lines to skip at get go
+      # numericInput("skip.num", "Number of lines to skip", 1, 
+      #              min = NA, max = NA, step = NA)
+      # ,
       
-      # Input: Checkbox if file has header ----
-      checkboxInput("col.names",
-                    "Keep column names", 
-                    TRUE)
-      ,
+      # # Input: Checkbox if file has header ----
+      # checkboxInput("col.names",
+      #               "Keep column names", 
+      #               TRUE)
+      # ,
       
       
       # Input: Select number of rows to display ----
       radioButtons("disp", "Display",
                    choices = c(Head = "head",
+                               Tail = "tail",
                                All = "all"),
                    selected = "head")
       ,
@@ -100,23 +101,23 @@ ui <- fluidPage(
       ,
       
       textInput("launch.start", "Enter date and time of launch start (M/D/YYYY H:M:S)",
-                value = ("07/17/2022 8:14:00"))
+                value = ("03/23/2022 8:14:00"))
       ,
       
       textInput("launch.end", "Enter date and time of launch end (M/D/YYYY H:M:S)",
-                value = ("07/25/2022 07:56:00"))
+                value = ("03/30/2022 07:56:00"))
       ,
       
       conditionalPanel(condition = "input.filetype == 'ct_type'",
       
       # Input: Select whether logger recorded in high or low or both ranges ----
-      radioButtons("range", "CT Range",
-                   choices = c(High = "high.range",
-                               Low = "low.range"
-                               #Both = "both.range"
-                               ),
-                   selected = "high.range")
-      ,
+      # radioButtons("range", "CT Range",
+      #              choices = c(High = "high.range",
+      #                          Low = "low.range"
+      #                          #Both = "both.range"
+      #                          ),
+      #              selected = "high.range")
+      # ,
       
       # Horizontal line ----
       tags$hr()
@@ -129,13 +130,22 @@ ui <- fluidPage(
                    selected = "single")
       ,
       
+      # Horizontal line ----
+      tags$hr()
+      ,
+      
       # Include clarifying text ----
       helpText("LOGGER CALIBRATION DETAILS (Single Time Point Calibration or Pre-launch)")
       ,
       
-      # Input: user inputs the electrical conductivity value of the calibration reference solution
-      numericInput("calValue", "Calibration value (uS/cm)",
-                   value = 56258)
+      # Input: user inputs the date of calibration
+      dateInput("date_input", "Enter Date",
+                value = lubridate::mdy("03/23/2022"))
+      ,
+      
+      # Input: user inputs the time of calibration
+      textInput("time_input", "Enter time in 24h format (H:M:S)", 
+                value = ("18:00:00"))
       ,
       
       # Input: Buttons for EC vs SC calibration
@@ -145,21 +155,18 @@ ui <- fluidPage(
                    selected = "SC")
       ,
       
+      # Input: user inputs the electrical conductivity value of the calibration reference solution
+      numericInput("calValue", "Calibration value (uS/cm)",
+                   value = 56258)
+      ,
+      
       # Input: user inputs the temperature value at time of calibration
       numericInput("calTemp", "Calibration Temperature (C)",
                    value = 25.7)
       ,
       
-      
-      # Input: user inputs the date of calibration
-      dateInput("date_input", "Enter Date",
-                value = lubridate::mdy("07/14/2022"))
-      ,
-      
-      
-      # Input: user inputs the time of calibration
-      textInput("time_input", "Enter time in 24h format (H:M:S)", 
-                value = ("17:08:00"))
+      # Horizontal line ----
+      tags$hr()
       ,
       
       #########################################################################
@@ -168,11 +175,17 @@ ui <- fluidPage(
       
       # Include clarifying text ----
       helpText("POST-LAUNCH LOGGER CALIBRATION DETAILS (only if Two Time Points is selected above)")
+      
       ,
       
-      # Input: user inputs the electrical conductivity value of the calibration reference solution
-      numericInput("calValue.post", "Calibration value (uS/cm)",
-                   value = 56258)
+      # Input: user inputs the date of calibration
+      dateInput("date_input.post", "Enter Date",
+                value = lubridate::mdy("03/29/2022"))
+      ,
+      
+      # Input: user inputs the time of calibration
+      textInput("time_input.post", "Enter time in 24h format (H:M:S)", 
+                value = ("17:08:00"))
       ,
       
       # Input: Buttons for EC vs SC calibration
@@ -182,21 +195,16 @@ ui <- fluidPage(
                    selected = "SC")
       ,
       
+      # Input: user inputs the electrical conductivity value of the calibration reference solution
+      numericInput("calValue.post", "Calibration value (uS/cm)",
+                   value = 56258)
+      ,
+      
+      
       # Input: user inputs the temperature value at time of calibration
       numericInput("calTemp.post", "Calibration Temperature (C)",
                    value = 25.7)
-      ,
-      
-      
-      # Input: user inputs the date of calibration
-      dateInput("date_input.post", "Enter Date",
-                value = lubridate::mdy("07/14/2022"))
-      ,
-      
-      
-      # Input: user inputs the time of calibration
-      textInput("time_input.post", "Enter time in 24h format (H:M:S)", 
-                value = ("17:08:00"))
+
       
       
       ) # end of CT condition
@@ -269,29 +277,6 @@ ui <- fluidPage(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ######################################################################
 ######################################################################
 
@@ -314,9 +299,20 @@ server <- function(input, output) {
     
     req(input$file1)
     
-    df1 <- read_csv(input$file1$datapath,
-                    col_names = input$col.names,
-                    skip = input$skip.num)
+    if(input$filetype == "ct_type"){
+      df1 <- read_csv(input$file1$datapath,
+                    col_names = TRUE, # using default choice instead
+                    skip = 1) 
+    } else if(input$filetype == "depth_type"){
+      df1 <- read_csv(input$file1$datapath,
+                      col_names = TRUE, # using default choice instead
+                      skip = 1) 
+    } else if(input$filetype == "ph_type"){
+      df1 <- read_csv(input$file1$datapath,
+                      col_names = TRUE, # using default choice instead
+                      skip = 2) 
+    }
+    
     return(df1)
     
   })
@@ -331,7 +327,7 @@ server <- function(input, output) {
     
     if(input$filetype == "ct_type"){
       
-      if(input$range == "high.range"){ ## HIGH RANGE CT LOGGER DATA
+      # if(input$range == "high.range"){ ## HIGH RANGE CT LOGGER DATA
         
         df2 <- df.a() %>%
           dplyr::mutate(LoggerID = str_extract(string = colnames(df.a())[3], pattern = "[0-9]{8}")) %>%   # add column for Logger ID
@@ -349,43 +345,6 @@ server <- function(input, output) {
         } 
         
         
-      } else if(input$range == "low.range") { ## LOW RANGE CT LOGGER DATA
-        
-        df2 <- df.a() %>%
-          dplyr::mutate(LoggerID = str_extract(string = colnames(df.a())[3], pattern = "[0-9]{8}")) %>%   # add column for Logger ID
-          dplyr::select(contains('Date'), contains("Low Range"), contains("Temp")) %>%
-          dplyr::rename(Date=contains("Date"),
-                        TempInSitu=contains("Temp"),
-                        E_Conductivity=contains("Low Range")) %>%
-          dplyr::mutate(Date = as.character(mdy_hms(Date))) %>% 
-          # mutate(TempInSitu = if_else(input$log.temp == "degC", TempInSitu, ((TempInSitu - 32) * 5 / 9))) %>%
-          tidyr::drop_na()
-        # correct for temperature in F
-        if(input$log.temp == "degF"){
-          df2 <- df2 %>% 
-            mutate(TempInSitu = (TempInSitu - 32) * 5 / 9)
-        } 
-        
-        
-      }# else if(input$range == "both.range") { ## IF BOTH HIGH AND LOW CT LOGGER DATA
-        
-      #   df2 <- df.a() %>%
-      #     dplyr::mutate(LoggerID = str_extract(string = colnames(df.a())[3], pattern = "[0-9]{8}")) %>%   # add column for Logger ID
-      #     dplyr::select(LoggerID, contains('Date'), contains("High Range"), contains("Low Range"), contains("Temp")) %>%
-      #     dplyr::rename(Date=contains("Date"),
-      #                   TempInSitu=contains("Temp"),
-      #                   E_Conductivity_High=contains("High Range"),
-      #                   E_Conductivity_Low=contains("Low Range")) %>%
-      #     dplyr::mutate(Date = as.character(mdy_hms(Date))) %>% 
-      #     # dplyr::mutate(TempInSitu = if_else(input$log.temp == "degC", TempInSitu, ((TempInSitu - 32) * 5 / 9))) %>%
-      #     tidyr::drop_na()
-      #   # correct for temperature in F
-      #   if(input$log.temp == "degF"){
-      #     df2 <- df2 %>% 
-      #       dplyr::mutate(TempInSitu = (TempInSitu - 32) * 5 / 9)
-      #   } 
-      #   
-      # }
       
     } else if(input$filetype == "depth_type"){ ## WATER LEVEL LOGGER DATA
       
@@ -435,7 +394,6 @@ server <- function(input, output) {
     # unite date and time of calibration inputs for data filter
     inputDate <- paste(input$date_input, input$time_input)
     
-    
     # extract recorded temperature and EC value from logger at calibration time
     log.temp <- df.b() %>%
       filter(Date == inputDate) %>% 
@@ -478,12 +436,14 @@ server <- function(input, output) {
     ################# end single calibration
     
     
-    } else if(single.double.cal == 'double') { # if two point calibration
+    } else { # if two point calibration
       
       # unite date and time of calibration inputs for data filter
       inputDate.pre <- paste(input$date_input, input$time_input)
       inputDate.post <- paste(input$date_input.post, input$time_input.post)
       
+      logger_cal_length <- df.b() %>% 
+        filter(between(ymd_hms(Date), ymd_hms(inputDate.pre), ymd_hms(inputDate.post)))
       
       # extract recorded temperature and EC value from logger at PRE calibration time
       log.temp.pre <- df.b() %>%
@@ -507,88 +467,88 @@ server <- function(input, output) {
         select(E_Conductivity) %>% 
         as.numeric()
       
+      # use salinity instead of EC
+      # logger EC values at time of calibration as Practical Salinity
+      sal.insitu.pre <- gsw_SP_from_C(C = log.ec.pre * 0.001, t = log.temp.pre, p = 10)
+      sal.insitu.post <- gsw_SP_from_C(C = log.ec.post * 0.001, t = log.temp.post, p = 10)
+      
       
       # Offset between the calibration reference and the logger reading
       if(input$ec.sc.cal.post == 'ec'){ # if input value is EC
         
-        offset.ec.pre <- input$calValue - log.ec.pre # calculate offset using EC value
-        offset.ec.post <- input$calValue.post - log.ec.post
+        # calibration values
+        sal.pre <- gsw_SP_from_C(C = input$calValue * 0.001, t = input$calTemp, p = 10)
+        sal.post <- gsw_SP_from_C(C = input$calValue.post * 0.001, t = input$calTemp.post, p = 10)
+        
+        # drift offset = calibration - logger
+        offset.sal.pre <- sal.pre - sal.insitu.pre
+        offset.sal.post <- sal.post - sal.insitu.post
+  
+        drift.cor.sal = (offset.sal.post - offset.sal.pre) / nrow(logger_cal_length) # total units drifted over time / total units
+        
+        
         
       } else { # if input value is SC
         
-        # Pre-launch
+        # calibration values
         sal.pre <- gsw_SP_from_C(C = input$calValue * 0.001, t = 25, p = 10) # calculate practical salinity at 25C
-        cal.ec.pre <- 1000 * gsw_C_from_SP(SP = sal.pre, t = input$calTemp, p = 10) # back calculate EC from salinity at recorded temp
-        
-        offset.ec.pre <- cal.ec.pre - log.ec.pre # calculate offset using EC value
-        
-        # Post-launch
         sal.post <- gsw_SP_from_C(C = input$calValue.post * 0.001, t = 25, p = 10) # calculate practical salinity at 25C
-        cal.ec.post <- 1000 * gsw_C_from_SP(SP = sal.post, t = input$calTemp.post, p = 10) # back calculate EC from salinity at recorded temp
         
-        offset.ec.post <- cal.ec.post - log.ec.post # calculate offset using EC value
+        # drift offset = calibration - logger
+        offset.sal.pre <- sal.pre - sal.insitu.pre
+        offset.sal.post <- sal.post - sal.insitu.post
         
+        drift.cor.sal = (offset.sal.post - offset.sal.pre) / nrow(logger_cal_length) # total units drifted over time / total units
+        
+      
       }
       
+      # temperature drift offset = calibration - logger
       offset.temp.pre <- input$calTemp - log.temp.pre # calculate temperature offset
       offset.temp.post <- input$calTemp.post - log.temp.post
       
-      # Apply offset to logger data
-      # pre-launch calibration
-      df3.pre <- df.b() %>%
-        dplyr::mutate(EC_Cal = df.b()$E_Conductivity + offset.ec.pre,
-                      TempInSitu_Cal = df.b()$TempInSitu + offset.temp.pre) %>%
-        
-        select(Date, LoggerID, TempInSitu_Cal, EC_Cal) %>% # only keep calibrated values and what we need
-        rename(EC_Cal.pre = EC_Cal, # rename electrical conductivity column as .1 for first/only time point
-               TempInSitu_Cal.pre = TempInSitu_Cal)  # rename calibrated temperature readings, calibrated to secondary probe, if available
-        
+      drift.cor.temp = (offset.temp.post - offset.temp.pre) / nrow(logger_cal_length) # total units drifted over time / total units
       
-      # post-launch calibration
-      df3.post <- df.b() %>%
-        dplyr::mutate(EC_Cal = df.b()$E_Conductivity + offset.ec.post,
-                      TempInSitu_Cal = df.b()$TempInSitu + offset.temp.post) %>%
-        
-        select(Date, LoggerID, TempInSitu_Cal, EC_Cal) %>% # only keep calibrated values and what we need
-        rename(EC_Cal.post = EC_Cal, # rename electrical conductivity column as .1 for first/only time point
-               TempInSitu_Cal.post = TempInSitu_Cal)   # rename calibrated temperature readings, calibrated to secondary probe, if available
-        
       
+  
       ### Drift Compensation
-      df3 <- full_join(df3.pre, df3.post) # join both calibration time point dataframes
-      
-      drift <- df3 %>% 
-        filter(between(Date, inputDate.pre, inputDate.post)) %>% # selects data between calibration times
-        mutate(drift_EC = (EC_Cal.post - EC_Cal.pre)/length(drift$Date),   # Drift correction factor
-               drift_Temp = (TempInSitu_Cal.post - TempInSitu_Cal.pre)/length(drift$Date))
-      
-      drift.cor.ec <- as.numeric(drift$drift_EC[1]) # correction value
-      drift.cor.temp <- as.numeric(drift$drift_Temp[1])
-
-      df3 <- df3 %>% 
-        filter(between(Date, inputDate.pre, inputDate.post)) %>% # selects all data between calibration time points
+      # df3 <- full_join(df3.pre, df3.post) # join both calibration time point dataframes
+      df3 <- df.b() %>% 
+        filter(between(ymd_hms(Date), ymd_hms(inputDate.pre), ymd_hms(inputDate.post))) %>% 
         arrange(Date) %>%
-        mutate(drift_EC = drift.cor.ec, # establish a column filled with the drift correction values
-               drift_Temp = drift.cor.temp,
-               EC.correction=cumsum(drift_EC), # fill the drift correction column with sequentially larger drift corrections from correlation value to full drift
-               Temp.correction=cumsum(drift_Temp)) %>% 
-        mutate(TempInSitu = TempInSitu_Cal.pre + Temp.correction,
-               ECond.mS.cm = EC_Cal.pre + EC.correction) %>% 
-        select(Date, LoggerID, TempInSitu, ECond.mS.cm) %>% 
-        mutate(Salinity_psu = gsw_SP_from_C(C = ECond.mS.cm, t = TempInSitu, p = 10))
-      
-      
-      
+        
+        # first correct temperature drift
+        mutate(Temp.drift.init = offset.temp.pre,
+               drift.cor.val = drift.cor.temp, # establish a column filled with the drift correction values
+               drift.correction.temp = cumsum(drift.cor.val), # fill the drift correction column with sequentially larger drift corrections from correlation value to full drift
+               Temp.drift.fin = Temp.drift.init + drift.correction.temp, # add the drift correction value to EC.drift.1 sequentially until we reach EC.drift.2 in final time point
+               TempInSitu = TempInSitu + Temp.drift.fin) %>%  
+        select(-drift.cor.val) %>% 
+        
+        # calculate practical salinity using new temperature
+        mutate(Salinity_psu.uncor = gsw_SP_from_C(C = E_Conductivity * 0.001, t = TempInSitu, p = 10)) %>%  # USING SALINITY FOR OFFSET INSTEAD OF EC
+        
+        # then correct salinity drift
+        mutate(Sal.drift.init = offset.sal.pre,
+               drift.cor.val = drift.cor.sal, # establish a column filled with the drift correction values
+               drift.correction.sal=cumsum(drift.cor.val), # fill the drift correction column with sequentially larger drift corrections from correlation value to full drift
+               Sal.drift.fin = Sal.drift.init + drift.correction.sal, # add the drift correction value to EC.drift.1 sequentially until we reach EC.drift.2 in final time point
+               Salinity_psu = Salinity_psu.uncor + Sal.drift.fin) %>% 
+        select(-drift.cor.val)
+        
     }
     
     # filter between launch dates
     df3 <- df3 %>%
-      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end)))
+      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end))) %>% 
+      select(LoggerID, Date, TempInSitu, Salinity_psu)
     
     
     return(df3)
     
   })
+  
+  
   
   
   
@@ -610,9 +570,11 @@ server <- function(input, output) {
     # return either head() or View() output
     if(input$disp == "head") {
       return(head(df.b()))
-    }
+      
+    } else if(input$disp == "tail") {
+      return(tail(df.b()))
     
-    else {
+    } else {
       return(df.b())
     }
   })
@@ -644,9 +606,12 @@ server <- function(input, output) {
     # return either head() or View() output
     if(input$disp == "head") {
       return(head(df.c()))
-    }
     
-    else {
+    } else if(input$disp == "tail") {
+      
+      return(tail(df.c()))
+    
+    } else {
       return(df.c())
     }
     
@@ -657,9 +622,11 @@ server <- function(input, output) {
   
   output$calibrated.plot <- renderPlot({
     
+    dfcplot <- df.c() %>% 
+      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end))) %>% 
+      mutate(Date = ymd_hms(Date))
     
-    calplot <- df.c() %>% 
-      mutate(Date = ymd_hms(Date)) %>%
+    calplot <- dfcplot %>% 
       ggplot(aes(x = Date,
                  y = Salinity_psu,
                  color = TempInSitu)) +
@@ -797,7 +764,7 @@ server <- function(input, output) {
   
   output$downloadpH <- downloadHandler(
     filename = function() {
-      paste0("Calibrated_",input$file1) # original file has .csv as part of filename alread
+      paste0("Calibrated_",input$file1) # original file has .csv as part of filename already
     },
     content = function(con) {
       write_csv(df.c(), con)
