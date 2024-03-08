@@ -227,7 +227,8 @@ ui <- fluidPage(
                            tableOutput("cal.contents"),
                            plotOutput("calibrated.plot"),
                            
-                           downloadButton('downloadCT', "Download CSV") # download csv file
+                           downloadButton('downloadCT', "Download CSV"), # download csv file
+                           downloadButton('downloadCTPlot', "Download Plot") # download plot
                            
                   )),
                   
@@ -238,7 +239,9 @@ ui <- fluidPage(
                            textOutput("depth.text"),
                            tableOutput("depth.table"),
                            plotOutput("depth.plot"),
-                           downloadButton('downloadDepth', "Download CSV") # download csv file
+                           
+                           downloadButton('downloadDepth', "Download CSV"), # download csv file
+                           downloadButton("downloadDepthPlot", "Download Plot") # download plot
                   )),
                   
                   conditionalPanel(condition = "input.filetype == 'ph_type'",
@@ -248,7 +251,9 @@ ui <- fluidPage(
                            textOutput("ph.text"),
                            tableOutput("ph.table"),
                            plotOutput("ph.plot"),
-                           downloadButton('downloadpH', "Download CSV") # download csv file
+                           
+                           downloadButton('downloadpH', "Download CSV"), # download csv file
+                           downloadButton("downloadpHPlot", "Download Plot") # download plot
                   )),
                   
                   # Horizontal line ----
@@ -256,7 +261,7 @@ ui <- fluidPage(
                   ,
                   # Information and lab logo at bottom of page
                   img(src='Silbiger_Lab_Logo.png', align = "center", height = 70, width = 140),
-                  helpText(HTML("<br>Shiny App created in RStudio by Danielle Barnas - Last updated May 2022 <br>Circular logo created by Jamie Kerlin"))
+                  helpText(HTML("<br>Shiny App created in RStudio by Danielle Barnas - Last updated March 2024 <br>Circular logo created by Jamie Kerlin"))
       )
       
       
@@ -603,7 +608,7 @@ server <- function(input, output) {
   output$cal.contents <- renderTable({
     
     
-    # return either head() or View() output
+    # return either head(), tail(), or View() output
     if(input$disp == "head") {
       return(head(df.c()))
     
@@ -616,30 +621,6 @@ server <- function(input, output) {
     }
     
   })
-  
-  
-  
-  
-  output$calibrated.plot <- renderPlot({
-    
-    dfcplot <- df.c() %>% 
-      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end))) %>% 
-      mutate(Date = ymd_hms(Date))
-    
-    calplot <- dfcplot %>% 
-      ggplot(aes(x = Date,
-                 y = Salinity_psu,
-                 color = TempInSitu)) +
-      geom_point() +
-      theme_bw() +
-      labs(y = "Salinity (psu)",
-           color = "Temperature (C)")
-    
-    return(calplot)
-  })
-  
-  
-  
   
   
   # Download calibrated csv file
@@ -657,36 +638,84 @@ server <- function(input, output) {
   
   
   
+  # create plot
+  my_ctplot <- reactive ({
+    
+    dfcplot <- df.c() %>% 
+      filter(between(ymd_hms(Date), mdy_hms(input$launch.start), mdy_hms(input$launch.end))) %>% 
+      mutate(Date = ymd_hms(Date))
+    
+    calplot <- dfcplot %>% 
+      ggplot(aes(x = Date,
+                 y = Salinity_psu,
+                 color = TempInSitu)) +
+      geom_point() +
+      theme_bw() +
+      labs(y = "Salinity (psu)",
+           color = "Temperature (C)")
+    
+    return(calplot)
+  })
+  
+  # render plot for output
+  output$calibrated.plot <- renderPlot({
+    
+    my_ctplot()
+    
+  })
+  
+  
+  # Download output plot
+  output$downloadCTPlot <- downloadHandler(
+    
+    filename = function() { 
+      paste0("plot_",input$file1,".png")
+    },
+    content = function(con2) {
+      png(con2) #, paper = "default")
+      plot(my_ctplot())
+      dev.off()
+    }
+  )
   
   
   #################################################################
   # WATER LEVEL OUTPUTS
   ################################################################# 
   
-  
-  
-  # output$depth.text <- renderText({
-  #   
-  #   mytext <- "Water level processing is in progress..."
-  #   
-  #   return(mytext)
-  # })
+
   
   
   output$depth.table <- renderTable({
     
-    # return either head() or View() output
+    # return either head(), tail(), or View() output
     if(input$disp == "head") {
       return(head(df.b()))
-    }
-    
-    else {
+      
+    } else if(input$disp == "tail") {
+      
+      return(tail(df.b()))
+      
+    } else {
       return(df.b())
     }
     
   })
   
-  output$depth.plot <- renderPlot({
+  
+  # Download calibrated csv file
+  
+  output$downloadDepth <- downloadHandler(
+    filename = function() {
+      paste0("Processed_",input$file1) # original file has .csv as part of filename already
+    },
+    content = function(dep) {
+      write_csv(df.b(), dep)
+    }
+  )
+  
+  # create plot
+  my_depthplot <- reactive ({
     
     depthplot <- df.b() %>% 
       mutate(Date = ymd_hms(Date)) %>% 
@@ -696,54 +725,70 @@ server <- function(input, output) {
       geom_point() +
       theme_bw() +
       labs(y = "Depth (m)",
-           color = "Temperature (C)") +
-      ylim(min(-df.b()$Depth_m) - 0.2,0)
+           color = "Temperature (C)")
     
     return(depthplot)
-    
   })
   
+  # render plot for output
+  output$depth.plot <- renderPlot({
+    
+    my_depthplot()
+    
+  })
+
   
-  # Download calibrated csv file
-  
-  output$downloadDepth <- downloadHandler(
-    filename = function() {
-      paste0("Calibrated_",input$file1) # original file has .csv as part of filename already
+  # Download output plot
+  output$downloadDepthPlot <- downloadHandler(
+    
+    filename = function() { 
+      paste0("plot_",input$file1,".png")
     },
-    content = function(con) {
-      write_csv(df.c(), con)
+    content = function(dep2) {
+      png(dep2) #, paper = "default")
+      plot(my_depthplot())
+      dev.off()
     }
   )
-  
-  
+
+
   
   #################################################################
   # pH OUTPUTS
   ################################################################# 
   
-  # output$ph.text <- renderText({
-  #   
-  #   mytext <- "pH processing is in progress..."
-  #   
-  #   return(mytext)
-  # })
-  
+
   
   output$ph.table <- renderTable({
     
-    # return either head() or View() output
+    # return either head(), tail(), or View() output
     if(input$disp == "head") {
       return(head(df.b()))
-    }
-    
-    else {
+      
+    } else if(input$disp == "tail") {
+      
+      return(tail(df.b()))
+      
+    } else {
       return(df.b())
     }
     
   })
   
+  # Download calibrated csv file
   
-  output$ph.plot <- renderPlot({
+  output$downloadpH <- downloadHandler(
+    filename = function() {
+      paste0("Processed_",input$file1) # original file has .csv as part of filename already
+    },
+    content = function(peh) {
+      write_csv(df.b(), peh)
+    }
+  )
+  
+  
+  # create plot
+  my_phplot <- reactive ({
     
     phplot <- df.b() %>% 
       mutate(Date = ymd_hms(Date)) %>% 
@@ -756,20 +801,29 @@ server <- function(input, output) {
            color = "Temperature (C)")
     
     return(phplot)
+  })
+  
+  # render plot output
+  output$ph.plot <- renderPlot({
+    
+    my_phplot()
     
   })
   
-  
-  # Download calibrated csv file
-  
-  output$downloadpH <- downloadHandler(
-    filename = function() {
-      paste0("Calibrated_",input$file1) # original file has .csv as part of filename already
-    },
-    content = function(con) {
-      write_csv(df.c(), con)
+  # Download output plot
+  output$downloadpHPlot <- downloadHandler(
+    filename = function() { 
+      paste0("plot_",input$file1,".png")
+      },
+    content = function(peh2) {
+      png(peh2) #, paper = "default")
+      plot(my_phplot())
+      dev.off()
     }
   )
+
+  
+  
   
 }
 
